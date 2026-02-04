@@ -15,15 +15,13 @@ public class UserAsset {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String assetType;     // STOCK/CRYPTO
+    private String assetType;
     private String symbol;
     private String name;
 
-    // BUY INFO (from table)
-    private BigDecimal buyPrice;  // User's buy price
-    private Integer qty;          // Quantity held
+    private BigDecimal buyPrice;
+    private Integer qty;
 
-    // LIVE PRICES (API refresh)
     private BigDecimal currentPrice;
     private LocalDateTime currentUpdated;
 

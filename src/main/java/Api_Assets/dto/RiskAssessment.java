@@ -1,4 +1,3 @@
-// java
 package Api_Assets.dto;
 
 import lombok.AllArgsConstructor;
@@ -11,8 +10,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RiskAssessment {
-    private String action; // "BUY" or "SELL"
-    private String riskLevel; // "LOW", "MEDIUM", "HIGH", "INSUFFICIENT_QUANTITY", "NO_HOLDINGS"
+    private String action;
+    private String riskLevel;
     private BigDecimal avgBuyPrice;
     private BigDecimal currentPrice;
     private BigDecimal percentDifference; // (current - avg) / avg * 100

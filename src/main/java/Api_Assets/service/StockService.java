@@ -18,7 +18,6 @@ public class StockService {
 
     public BigDecimal getCurrentPrice(String symbol) {
         try {
-            // ✅ CORRECT StockData.org endpoint for quote
             String url = "https://api.stockdata.org/v1/data/quote?symbols=" + symbol.toUpperCase() + "&api_token=" + apiKey;
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -46,10 +45,8 @@ public class StockService {
         return getFallbackPrice(symbol);
     }
 
-    // ✅ FIXED JSON parsing for StockData.org format
     private String parsePrice(String json) {
         try {
-            // StockData.org format: "data": [{"price": "235.82"}]
             String jsonLower = json.toLowerCase();
 
             if (jsonLower.contains("\"price\"")) {

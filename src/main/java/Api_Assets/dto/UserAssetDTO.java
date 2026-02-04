@@ -12,7 +12,6 @@ public class UserAssetDTO {
     private String assetType;
     private String symbol;
     private String name;
-    private BigDecimal currentPrice;     // LIVE API
-    private LocalDateTime currentUpdated; // LIVE DATE
-    // NO sellingPrice/sellingDate here!
+    private BigDecimal currentPrice;
+    private LocalDateTime currentUpdated;
 }
