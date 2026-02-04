@@ -10,7 +10,7 @@ import java.math.RoundingMode;
 import java.util.List;
 
 @Service
-public class AssetService {
+public class UserAssetService {
 
     private static final BigDecimal HIGH_RISK_THRESHOLD = BigDecimal.valueOf(10); // percent
     private static final BigDecimal MEDIUM_RISK_THRESHOLD = BigDecimal.valueOf(3); // percent
@@ -21,9 +21,9 @@ public class AssetService {
     private final StockService stockService;
     private final CryptoService cryptoService;
 
-    public AssetService(UserAssetRepository userAssetRepository,
-                        StockService stockService,
-                        CryptoService cryptoService) {
+    public UserAssetService(UserAssetRepository userAssetRepository,
+                            StockService stockService,
+                            CryptoService cryptoService) {
         this.userAssetRepository = userAssetRepository;
         this.stockService = stockService;
         this.cryptoService = cryptoService;

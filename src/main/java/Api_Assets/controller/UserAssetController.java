@@ -5,7 +5,7 @@ import Api_Assets.dto.RiskAssessment;
 import Api_Assets.dto.SellRequest;
 import Api_Assets.entity.UserAsset;
 import Api_Assets.repository.UserAssetRepository;
-import Api_Assets.service.AssetService;
+import Api_Assets.service.UserAssetService;
 import Api_Assets.service.CryptoService;
 import Api_Assets.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +18,12 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/assets")
-public class AssetController {
+public class UserAssetController {
 
     @Autowired private UserAssetRepository repo;
     @Autowired private StockService stockService;
     @Autowired private CryptoService cryptoService;
-    @Autowired private AssetService assetService;
+    @Autowired private UserAssetService userAssetService;
 
     private static final int PERCENT_SCALE = 2;
     private static final int DIVIDE_SCALE = 8;
@@ -159,12 +159,12 @@ public class AssetController {
 
     @GetMapping("/risk/buy/{symbol}/{qty}")
     public RiskAssessment checkBuyRisk(@PathVariable String symbol, @PathVariable int qty) {
-        return assetService.checkBuyRisk(symbol, qty);
+        return userAssetService.checkBuyRisk(symbol, qty);
     }
 
     @GetMapping("/risk/sell/{symbol}/{qty}")
     public RiskAssessment checkSellRisk(@PathVariable String symbol, @PathVariable int qty) {
-        return assetService.checkSellRisk(symbol, qty);
+        return userAssetService.checkSellRisk(symbol, qty);
     }
 
     private BigDecimal getLivePrice(String assetType, String symbol) {

@@ -1,6 +1,6 @@
 package Api_Assets.service;
 
-import Api_Assets.dto.AssetRecommendation;
+import Api_Assets.dto.UserAssetRecommendation;
 import Api_Assets.entity.UserAsset;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +35,7 @@ public class ChatService {
             List<UserAsset> allStocks = recommendationService.getAllStocks();
             String diversification = analyzeStockDiversification(allStocks);
 
-            List<AssetRecommendation> topStocks = recommendationService.getTopNStocks(n);
+            List<UserAssetRecommendation> topStocks = recommendationService.getTopNStocks(n);
             if (topStocks.isEmpty()) return "No stocks found in your portfolio.";
 
             String stocksText = formatAssetList(topStocks, "STOCK");
@@ -48,7 +48,7 @@ public class ChatService {
         }
 
         if (msg.contains("top") && msg.contains("crypto")) {
-            List<AssetRecommendation> topCrypto = recommendationService.getTopNCrypto(n);
+            List<UserAssetRecommendation> topCrypto = recommendationService.getTopNCrypto(n);
             if (topCrypto.isEmpty()) return "No crypto assets found in your portfolio.";
 
             String cryptoText = formatAssetList(topCrypto, "CRYPTO");
@@ -61,7 +61,7 @@ public class ChatService {
         }
 
         if (msg.contains("top")) {
-            List<AssetRecommendation> topAssets = recommendationService.getTopNAssets(n);
+            List<UserAssetRecommendation> topAssets = recommendationService.getTopNAssets(n);
             if (topAssets.isEmpty()) return "No assets found in your portfolio.";
 
             String assetsText = formatAssetList(topAssets, null);
@@ -96,7 +96,7 @@ public class ChatService {
         return "**GOOD DIVERSIFICATION** (" + totalStocks + " stocks): Balanced portfolio size.";
     }
 
-    private String formatAssetList(List<AssetRecommendation> assets, String type) {
+    private String formatAssetList(List<UserAssetRecommendation> assets, String type) {
         return assets.stream()
                 .map(a -> "**" + a.getSymbol() + "** (" + formatPercent(a.getProfitPercent()) +
                         (type != null ? ", " + type : "") + ")")
@@ -130,12 +130,12 @@ public class ChatService {
         );
     }
 
-    private String fallbackResponse(String type, List<AssetRecommendation> assets, String diversification) {
+    private String fallbackResponse(String type, List<UserAssetRecommendation> assets, String diversification) {
         String divText = "STOCKS".equals(type) ? "\n" + diversification : "";
         return "TOP " + type + ": " + formatAssetList(assets, type) + divText;
     }
 
-    private String fallbackResponse(String type, List<AssetRecommendation> assets) {
+    private String fallbackResponse(String type, List<UserAssetRecommendation> assets) {
         return fallbackResponse(type, assets, "");
     }
 

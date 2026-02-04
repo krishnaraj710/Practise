@@ -1,6 +1,6 @@
 package Api_Assets.service;
 
-import Api_Assets.dto.AssetRecommendation;
+import Api_Assets.dto.UserAssetRecommendation;
 import Api_Assets.entity.UserAsset;
 import Api_Assets.repository.UserAssetRepository;
 import lombok.Getter;
@@ -54,7 +54,7 @@ public class RecommendationService {
         return SYMBOL_MAP.getOrDefault(symbol.toLowerCase(), symbol.toUpperCase());
     }
 
-    private List<AssetRecommendation> deduplicateRecommendations(List<AssetRecommendation> recs) {
+    private List<UserAssetRecommendation> deduplicateRecommendations(List<UserAssetRecommendation> recs) {
         return recs.stream()
                 .collect(Collectors.toMap(
                         rec -> normalizeSymbol(rec.getSymbol()),
@@ -89,7 +89,7 @@ public class RecommendationService {
         }
     }
 
-    private AssetRecommendation calculateRecommendation(Map.Entry<String, List<UserAsset>> entry) {
+    private UserAssetRecommendation calculateRecommendation(Map.Entry<String, List<UserAsset>> entry) {
         String symbol = normalizeSymbol(entry.getKey());
         List<UserAsset> assets = entry.getValue();
 
@@ -127,7 +127,7 @@ public class RecommendationService {
 
         String riskLevel = calculateRisk(profitPercent);
 
-        return new AssetRecommendation(symbol, riskLevel, profitPercent);
+        return new UserAssetRecommendation(symbol, riskLevel, profitPercent);
     }
 
     private String calculateRisk(BigDecimal profitPercent) {
@@ -141,65 +141,65 @@ public class RecommendationService {
         return "LOW";
     }
 
-    public List<AssetRecommendation> getTopNStocks(int n) {
+    public List<UserAssetRecommendation> getTopNStocks(int n) {
         List<UserAsset> stocks = userAssetRepository.findAllStocks();
         if (stocks.isEmpty()) return List.of();
 
         Map<String, List<UserAsset>> grouped =
                 stocks.stream().collect(Collectors.groupingBy(UserAsset::getSymbol));
 
-        List<AssetRecommendation> recs = new ArrayList<>();
+        List<UserAssetRecommendation> recs = new ArrayList<>();
         for (Map.Entry<String, List<UserAsset>> entry : grouped.entrySet()) {
-            AssetRecommendation rec = calculateRecommendation(entry);
+            UserAssetRecommendation rec = calculateRecommendation(entry);
             if (rec != null) recs.add(rec);
         }
 
         recs = deduplicateRecommendations(recs);
 
         return recs.stream()
-                .sorted(Comparator.comparing(AssetRecommendation::getProfitPercent).reversed())
+                .sorted(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed())
                 .limit(n)
                 .collect(Collectors.toList());
     }
 
-    public List<AssetRecommendation> getTopNCrypto(int n) {
+    public List<UserAssetRecommendation> getTopNCrypto(int n) {
         List<UserAsset> crypto = userAssetRepository.findAllCrypto();
         if (crypto.isEmpty()) return List.of();
 
         Map<String, List<UserAsset>> grouped =
                 crypto.stream().collect(Collectors.groupingBy(UserAsset::getSymbol));
 
-        List<AssetRecommendation> recs = new ArrayList<>();
+        List<UserAssetRecommendation> recs = new ArrayList<>();
         for (Map.Entry<String, List<UserAsset>> entry : grouped.entrySet()) {
-            AssetRecommendation rec = calculateRecommendation(entry);
+            UserAssetRecommendation rec = calculateRecommendation(entry);
             if (rec != null) recs.add(rec);
         }
 
         recs = deduplicateRecommendations(recs);
 
         return recs.stream()
-                .sorted(Comparator.comparing(AssetRecommendation::getProfitPercent).reversed())
+                .sorted(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed())
                 .limit(n)
                 .collect(Collectors.toList());
     }
 
-    public List<AssetRecommendation> getTopNAssets(int n) {
+    public List<UserAssetRecommendation> getTopNAssets(int n) {
         List<UserAsset> allAssets = userAssetRepository.findAll();
         if (allAssets.isEmpty()) return List.of();
 
         Map<String, List<UserAsset>> grouped =
                 allAssets.stream().collect(Collectors.groupingBy(UserAsset::getSymbol));
 
-        List<AssetRecommendation> recs = new ArrayList<>();
+        List<UserAssetRecommendation> recs = new ArrayList<>();
         for (Map.Entry<String, List<UserAsset>> entry : grouped.entrySet()) {
-            AssetRecommendation rec = calculateRecommendation(entry);
+            UserAssetRecommendation rec = calculateRecommendation(entry);
             if (rec != null) recs.add(rec);
         }
 
         recs = deduplicateRecommendations(recs);
 
         return recs.stream()
-                .sorted(Comparator.comparing(AssetRecommendation::getProfitPercent).reversed())
+                .sorted(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed())
                 .limit(n)
                 .collect(Collectors.toList());
     }

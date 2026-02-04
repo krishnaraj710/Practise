@@ -3,7 +3,7 @@ package com.example.Api_Assets.service;
 import Api_Assets.dto.RiskAssessment;
 import Api_Assets.entity.UserAsset;
 import Api_Assets.repository.UserAssetRepository;
-import Api_Assets.service.AssetService;
+import Api_Assets.service.UserAssetService;
 import Api_Assets.service.CryptoService;
 import Api_Assets.service.StockService;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AssetServiceTest {
+class UserAssetServiceTest {
 
     @Mock
     private UserAssetRepository userAssetRepository;
@@ -33,13 +33,13 @@ class AssetServiceTest {
     private CryptoService cryptoService;
 
     @InjectMocks
-    private AssetService assetService;
+    private UserAssetService userAssetService;
 
     @Test
     void checkSellRisk_noHoldings_returnsNoHoldings() {
         when(userAssetRepository.findBySymbol("NOP")).thenReturn(Collections.emptyList());
 
-        RiskAssessment r = assetService.checkSellRisk("NOP", 1);
+        RiskAssessment r = userAssetService.checkSellRisk("NOP", 1);
 
         assertEquals("NO_HOLDINGS", r.getRiskLevel());
     }
@@ -53,7 +53,7 @@ class AssetServiceTest {
         a.setQty(5);
         when(userAssetRepository.findBySymbol("ABC")).thenReturn(List.of(a));
 
-        RiskAssessment r = assetService.checkSellRisk("ABC", 10);
+        RiskAssessment r = userAssetService.checkSellRisk("ABC", 10);
 
         assertEquals("INSUFFICIENT_QUANTITY", r.getRiskLevel());
     }
@@ -68,7 +68,7 @@ class AssetServiceTest {
         when(userAssetRepository.findBySymbol("LOSS")).thenReturn(List.of(a));
         when(stockService.getCurrentPrice("LOSS")).thenReturn(new BigDecimal("80")); // -20% => HIGH
 
-        RiskAssessment r = assetService.checkSellRisk("LOSS", 5);
+        RiskAssessment r = userAssetService.checkSellRisk("LOSS", 5);
 
         assertEquals("HIGH", r.getRiskLevel());
         assertTrue(r.getRecommendation().toLowerCase().contains("high risk"));
@@ -79,7 +79,7 @@ class AssetServiceTest {
         when(userAssetRepository.findBySymbol("NEW")).thenReturn(Collections.emptyList());
         when(stockService.getCurrentPrice("NEW")).thenReturn(new BigDecimal("50"));
 
-        RiskAssessment r = assetService.checkBuyRisk("NEW", 10);
+        RiskAssessment r = userAssetService.checkBuyRisk("NEW", 10);
 
         assertEquals("LOW", r.getRiskLevel());
         assertEquals(new BigDecimal("50.0000"), r.getCurrentPrice());
@@ -95,7 +95,7 @@ class AssetServiceTest {
         when(userAssetRepository.findBySymbol("ABC")).thenReturn(List.of(a));
         when(stockService.getCurrentPrice("ABC")).thenReturn(new BigDecimal("104")); // +4% -> MEDIUM
 
-        RiskAssessment r = assetService.checkBuyRisk("ABC", 2);
+        RiskAssessment r = userAssetService.checkBuyRisk("ABC", 2);
 
         assertEquals("MEDIUM", r.getRiskLevel());
     }
