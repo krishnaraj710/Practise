@@ -8,16 +8,16 @@ import java.time.LocalDateTime;
 @Data
 public class DashboardAsset {
     private Long id;
-    private String type;           // assetType
+    private String type;
     private String symbol;
     private String name;
-    private BigDecimal buyPrice;   // From table
-    private Integer qty;           // From table
-    private BigDecimal currentPrice; // LIVE API
-    private LocalDateTime currentDate; // LIVE time
+    private BigDecimal buyPrice;
+    private Integer qty;
+    private BigDecimal currentPrice;
+    private LocalDateTime currentDate;
     private BigDecimal differencePercent;
-    private BigDecimal percent;// profit or loss amount
-    private String status;         // PROFIT or LOSS
+    private BigDecimal percent;
+    private String status;
 
     public DashboardAsset(Long id, String type, String symbol, String name, BigDecimal buyPrice, Integer qty, BigDecimal currentPrice, LocalDateTime currentDate, BigDecimal difference,BigDecimal percent, String status) {
         this.id = id;

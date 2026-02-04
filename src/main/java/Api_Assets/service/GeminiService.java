@@ -26,13 +26,13 @@ public class GeminiService {
     @PostConstruct
     public void init() {
         if (!StringUtils.hasText(apiKey)) {
-            System.err.println("❌ NO GEMINI API KEY FOUND! Using fallback responses.");
+            System.err.println("NO GEMINI API KEY FOUND! Using fallback responses.");
             this.apiUrl = null;
             return;
         }
 
         this.apiUrl = baseUrl + apiKey.trim();
-        System.out.println("🔑 Gemini API initialized: " + apiUrl.substring(0, 60) + "...");
+        System.out.println("Gemini API initialized: " + apiUrl.substring(0, 60) + "...");
     }
 
     public String generateResponse(String prompt) {
@@ -60,11 +60,11 @@ public class GeminiService {
             if (response.getStatusCode() == HttpStatus.OK) {
                 return parseGeminiResponse(response.getBody());
             } else {
-                System.err.println("❌ Gemini HTTP " + response.getStatusCode() + ": " + response.getBody());
+                System.err.println("Gemini HTTP " + response.getStatusCode() + ": " + response.getBody());
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("❌ Gemini error: " + e.getMessage());
+            System.err.println("Gemini error: " + e.getMessage());
             return null;
         }
     }
@@ -81,7 +81,7 @@ public class GeminiService {
             }
             return null;
         } catch (Exception e) {
-            System.err.println("❌ JSON parse error: " + e.getMessage());
+            System.err.println("JSON parse error: " + e.getMessage());
             return null;
         }
     }

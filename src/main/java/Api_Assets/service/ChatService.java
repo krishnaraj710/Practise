@@ -77,23 +77,23 @@ public class ChatService {
     }
 
     private String analyzeStockDiversification(List<UserAsset> stocks) {
-        if (stocks.isEmpty()) return "🟡 **NO STOCKS**: Add stocks to analyze diversification.";
+        if (stocks.isEmpty()) return "**NO STOCKS**: Add stocks to analyze diversification.";
 
         long totalStocks = stocks.stream().map(UserAsset::getSymbol).distinct().count();
 
         if (totalStocks <= 2) {
-            return "🔴 **CONCENTRATED** (" + totalStocks + " stocks): High risk - too few holdings.";
+            return "**CONCENTRATED** (" + totalStocks + " stocks): High risk - too few holdings.";
         }
 
         if (totalStocks <= 4) {
-            return "🟡 **MODERATE** (" + totalStocks + " stocks): Consider 1-2 more for better diversification.";
+            return "**MODERATE** (" + totalStocks + " stocks): Consider 1-2 more for better diversification.";
         }
 
         if (totalStocks >= 8) {
-            return "🟢 **WELL DIVERSIFIED** (" + totalStocks + " stocks): Excellent spread across holdings.";
+            return "**WELL DIVERSIFIED** (" + totalStocks + " stocks): Excellent spread across holdings.";
         }
 
-        return "🟢 **GOOD DIVERSIFICATION** (" + totalStocks + " stocks): Balanced portfolio size.";
+        return "**GOOD DIVERSIFICATION** (" + totalStocks + " stocks): Balanced portfolio size.";
     }
 
     private String formatAssetList(List<AssetRecommendation> assets, String type) {
@@ -132,7 +132,7 @@ public class ChatService {
 
     private String fallbackResponse(String type, List<AssetRecommendation> assets, String diversification) {
         String divText = "STOCKS".equals(type) ? "\n" + diversification : "";
-        return "✅ **TOP " + type + "**: " + formatAssetList(assets, type) + divText;
+        return "TOP " + type + ": " + formatAssetList(assets, type) + divText;
     }
 
     private String fallbackResponse(String type, List<AssetRecommendation> assets) {

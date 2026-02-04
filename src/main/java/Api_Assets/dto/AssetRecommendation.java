@@ -17,7 +17,6 @@ public class AssetRecommendation {
     private BigDecimal currentPrice;
     private BigDecimal profitPercent;
 
-    // Convenience constructor used by RecommendationService (symbol, riskLevel, profitPercent)
     public AssetRecommendation(String symbol, String riskLevel, BigDecimal profitPercent) {
         this.symbol = symbol;
         this.riskLevel = riskLevel;
