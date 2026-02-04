@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Manage Assets</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body data-page="manage-assets">
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar d-flex flex-column flex-shrink-0 p-3">
+      <a href="index.html" class="sidebar-brand d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+        <span class="fs-5 fw-bold">My Portfolio</span>
+      </a>
+      <hr />
+      <ul class="nav nav-pills flex-column mb-auto gap-1">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="manage-assets.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-sliders2 me-2"></i> Manage Assets
+          </a>
+        </li>
+        <li>
+          <a href="holdings.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-table me-2"></i> Holdings
+          </a>
+        </li>
+        <li>
+          <a href="charts.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-graph-up-arrow me-2"></i> Visualizations
+          </a>
+        </li>
+        <li>
+          <a href="chatbot.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-robot me-2"></i> AI Chatbot
+          </a>
+        </li>
+        <li>
+          <a href="report.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-file-bar-graph me-2"></i> Report / Summary
+          </a>
+        </li>
+      </ul>
+      <hr />
+      <div class="sidebar-footer small">
+        <span class="text-muted">© 2026</span>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content flex-grow-1">
+      <header class="topbar d-flex align-items-center justify-content-between px-3 px-md-4">
+        <div>
+          <h1 class="h4 mb-0">Manage Assets</h1>
+          <p class="text-muted small mb-0">Add, edit, and remove assets in your portfolio</p>
+        </div>
+      </header>
+
+      <div class="container-fluid py-4">
+        <div class="row g-4">
+          <!-- Add / Edit form -->
+          <div class="col-12 col-lg-4">
+            <div class="card shadow-sm">
+              <div class="card-header">
+                <h2 class="card-title h6 mb-0" id="asset-form-title">Add New Asset</h2>
+              </div>
+              <div class="card-body">
+                <form id="asset-form">
+                  <input type="hidden" id="asset-id" />
+                  <div class="mb-3">
+                    <label for="asset-symbol" class="form-label">Symbol</label>
+                    <input type="text" class="form-control" id="asset-symbol" placeholder="e.g. AAPL, BTC" required />
+                  </div>
+                  <div class="mb-3">
+                    <label for="asset-name" class="form-label">Name (optional)</label>
+                    <input type="text" class="form-control" id="asset-name" placeholder="Apple Inc." />
+                  </div>
+                  <div class="mb-3">
+                    <label for="asset-category" class="form-label">Category</label>
+                    <select class="form-select" id="asset-category" required>
+                      <option value="">Select category</option>
+                      <option value="Stocks">Stocks</option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="Bonds">Bonds</option>
+                      <option value="Cash">Cash</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="asset-buy-price" class="form-label">Buy Price</label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" class="form-control" id="asset-buy-price" step="0.01" min="0" required />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="asset-quantity" class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="asset-quantity" step="0.0001" min="0" required />
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                      <i class="bi bi-plus-circle me-1"></i>
+                      <span id="asset-form-submit-label">Add Asset</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary d-none" id="asset-form-cancel-edit">
+                      Cancel
+                    </button>
+                  </div>
+                  <p class="mt-3 small text-muted mb-0">
+                    <!-- BACKEND INTEGRATION NOTE:
+                         Replace the in-memory asset store in JS with real API calls,
+                         e.g. POST /api/assets, PUT /api/assets/:id, DELETE /api/assets/:id. -->
+                    Changes are currently managed on the client. Integrate with your backend
+                    asset API for persistence.
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset list -->
+          <div class="col-12 col-lg-8">
+            <div class="card shadow-sm h-100">
+              <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                <h2 class="card-title h6 mb-0">Current Assets</h2>
+                <div class="d-flex align-items-center gap-2">
+                  <input
+                    type="search"
+                    id="asset-search"
+                    class="form-control form-control-sm"
+                    placeholder="Search by symbol or name"
+                  />
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Symbol</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th class="text-end">Buy Price</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="asset-table-body">
+                      <!-- JS will render asset rows here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card-footer small text-muted d-flex justify-content-between">
+                <span id="asset-count">0 assets</span>
+                <span>
+                  <a href="holdings.html" class="text-decoration-none">
+                    View live holdings <i class="bi bi-arrow-right-short"></i>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

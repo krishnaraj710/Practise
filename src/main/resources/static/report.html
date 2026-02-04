@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Report / Summary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body data-page="report">
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar d-flex flex-column flex-shrink-0 p-3">
+      <a href="index.html" class="sidebar-brand d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+        <span class="fs-5 fw-bold">My Portfolio</span>
+      </a>
+      <hr />
+      <ul class="nav nav-pills flex-column mb-auto gap-1">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="manage-assets.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-sliders2 me-2"></i> Manage Assets
+          </a>
+        </li>
+        <li>
+          <a href="holdings.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-table me-2"></i> Holdings
+          </a>
+        </li>
+        <li>
+          <a href="charts.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-graph-up-arrow me-2"></i> Visualizations
+          </a>
+        </li>
+        <li>
+          <a href="chatbot.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-robot me-2"></i> AI Chatbot
+          </a>
+        </li>
+        <li>
+          <a href="report.html" class="nav-link d-flex align-items-center">
+            <i class="bi bi-file-bar-graph me-2"></i> Report / Summary
+          </a>
+        </li>
+      </ul>
+      <hr />
+      <div class="sidebar-footer small">
+        <span class="text-muted">© 2026</span>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content flex-grow-1">
+      <header class="topbar d-flex align-items-center justify-content-between px-3 px-md-4">
+        <div>
+          <h1 class="h4 mb-0">Report / Summary</h1>
+          <p class="text-muted small mb-0">Performance highlights and insights</p>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" id="refresh-report">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </header>
+
+      <div class="container-fluid py-4">
+        <div class="row g-4 mb-3">
+          <!-- Performance highlight card -->
+          <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header">
+                <h2 class="card-title h6 mb-0">Performance Highlights</h2>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled small mb-0" id="report-highlights">
+                  <!-- JS will populate highlights -->
+                  <li class="mb-2 text-muted">
+                    Loading highlights from your portfolio data…
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gainers -->
+          <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="card-title h6 mb-0">Top Gainers</h2>
+                <span class="badge bg-success-subtle text-success small" id="gainers-count">0</span>
+              </div>
+              <div class="card-body">
+                <ul class="list-group list-group-flush small" id="report-gainers">
+                  <!-- Filled via JS from holdings / recommendations -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Losers -->
+          <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="card-title h6 mb-0">Top Losers</h2>
+                <span class="badge bg-danger-subtle text-danger small" id="losers-count">0</span>
+              </div>
+              <div class="card-body">
+                <ul class="list-group list-group-flush small" id="report-losers">
+                  <!-- Filled via JS from holdings / recommendations -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Insights -->
+          <div class="col-12 col-xl-8">
+            <div class="card shadow-sm h-100">
+              <div class="card-header">
+                <h2 class="card-title h6 mb-0">Insights</h2>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled small mb-0" id="report-insights">
+                  <!-- JS will inject insight bullets here -->
+                  <li class="mb-2 text-muted">
+                    Insights will be generated from your holdings and recommendations.
+                  </li>
+                </ul>
+              </div>
+              <div class="card-footer small text-muted">
+                <!-- BACKEND INTEGRATION NOTE:
+                     Report data can combine:
+                       - /api/portfolio (for overall metrics)
+                       - /api/holdings (for gainers/losers)
+                       - /api/recommendations/top3 (for suggestions & insights). -->
+                Combine multiple endpoints to build richer insights.
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="col-12 col-xl-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="card-title h6 mb-0">Top 3 Recommendations</h2>
+                <span class="small text-muted">From /api/recommendations/top3</span>
+              </div>
+              <div class="card-body">
+                <ul class="list-group list-group-flush small" id="report-recommendations">
+                  <!-- JS will render recommendations here -->
+                </ul>
+              </div>
+              <div class="card-footer text-end">
+                <a href="chatbot.html" class="btn btn-outline-primary btn-sm">
+                  Discuss with AI <i class="bi bi-arrow-right-short"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
