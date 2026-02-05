@@ -187,7 +187,6 @@ feature/Dashboard-ui
 
 Typical flow:
 
-bash
 git checkout main
 git pull origin main
 git checkout -b feature/my-feature
