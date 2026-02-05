@@ -1,4 +1,4 @@
-# Financial Portfolio Management API
+# Archive Portfolio Management 
 
 A Spring Boot backend for managing **stock and cryptocurrency portfolios** with real-time prices, profit/loss tracking, risk assessment, and AI recommendations.
 
@@ -14,9 +14,13 @@ A Spring Boot backend for managing **stock and cryptocurrency portfolios** with 
 ## 🛠️ Tech Stack
 
 Backend: Spring Boot + Java
+
 Database: JPA/H2/MySQL
+
 APIs: Binance, StockData.org, Gemini AI
+
 Build: Maven
+
 Testing: JUnit 
 
 ## 📋 API Endpoints
@@ -40,18 +44,17 @@ Testing: JUnit
 ### Prerequisites
 - Java 17+, Maven 3.8+
 
-### 1. Clone & Build
+### 1. Clone and Build
 ```bash
 git clone https://github.com/divya0267/Archive-FinancialPortfolio.git
 cd Archive-FinancialPortfolio
 mvn clean install
 
-### 2. Configure API Keys (application.properties)
-```properties
+### 2.** Configure API Keys (application.properties)**
 stockdata.api.key=YOUR_STOCKDATA_KEY
 gemini.api.key=YOUR_GEMINI_KEY
 
 
-### 3. Run
+### 3.**Run**
 mvn spring-boot:run
 
