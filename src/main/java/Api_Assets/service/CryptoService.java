@@ -14,44 +14,43 @@ public class CryptoService {
 
     public BigDecimal getCryptoPrice(String symbol) {
         try {
-            String normalized = normalizeSymbol(symbol);
+            String coinId = mapToCoinGeckoId(symbol);
 
-            String url = "https://api.binance.com/api/v3/ticker/price?symbol=" + normalized + "USDT";
-            ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
+            String url = "https://api.coingecko.com/api/v3/simple/price"
+                    + "?ids=" + coinId
+                    + "&vs_currencies=usd";
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                JsonNode data = response.getBody();
-                if (data.has("price")) {
-                    BigDecimal price = data.get("price").decimalValue();
-                    return price != null ? price : BigDecimal.valueOf(50000);
-                }
+            ResponseEntity<JsonNode> response =
+                    restTemplate.getForEntity(url, JsonNode.class);
+
+            if (response.getStatusCode().is2xxSuccessful()
+                    && response.getBody() != null
+                    && response.getBody().has(coinId)) {
+
+                return response.getBody()
+                        .get(coinId)
+                        .get("usd")
+                        .decimalValue();
             }
         } catch (Exception e) {
-            System.err.println("Binance API error for " + symbol + ": " + e.getMessage());
+            System.err.println("CoinGecko API error for " + symbol + ": " + e.getMessage());
         }
 
         return getFallbackPrice(symbol);
     }
 
-    private String normalizeSymbol(String symbol) {
+    private String mapToCoinGeckoId(String symbol) {
         return switch (symbol.toLowerCase()) {
-            case "bitcoin", "btc", "btc-usd", "bitcoin-usd" -> "BTC";
-            case "ethereum", "eth", "eth-usd", "ethereum-usd" -> "ETH";
-            case "solana", "sol", "sol-usd" -> "SOL";
-            case "cardano", "ada" -> "ADA";
-            case "ripple", "xrp" -> "XRP";
-            default -> symbol.toUpperCase();
+            case "bitcoin", "btc" -> "bitcoin";
+            case "ethereum", "eth" -> "ethereum";
+            case "solana", "sol" -> "solana";
+            case "cardano", "ada" -> "cardano";
+            case "ripple", "xrp" -> "ripple";
+            default -> symbol.toLowerCase();
         };
     }
 
     private BigDecimal getFallbackPrice(String symbol) {
-        return switch (normalizeSymbol(symbol)) {
-            case "BTC" -> BigDecimal.valueOf(95000);
-            case "ETH" -> BigDecimal.valueOf(3200);
-            case "SOL" -> BigDecimal.valueOf(220);
-            case "ADA" -> BigDecimal.valueOf(0.85);
-            case "XRP" -> BigDecimal.valueOf(1.25);
-            default -> BigDecimal.valueOf(100.0);
-        };
+        return BigDecimal.valueOf(100);
     }
 }
