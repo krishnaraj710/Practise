@@ -62,10 +62,20 @@ public class UserAssetController {
             throw new RuntimeException("Asset not found");
         }
 
+        int totalAvailable = assets.stream()
+                .mapToInt(a -> a.getQty() != null ? a.getQty() : 0)
+                .sum();
+        int qtyToSell = request.getQuantityToSell();
+
+        if (qtyToSell <= 0) {
+            throw new RuntimeException("Sell quantity must be positive");
+        }
+        if (qtyToSell > totalAvailable) {
+            throw new RuntimeException("Sell quantity (" + qtyToSell + ") exceeds available (" + totalAvailable + "). No sell performed.");
+        }
+
         BigDecimal livePrice =
                 getLivePrice(assets.get(0).getAssetType(), request.getSymbol());
-
-        int qtyToSell = request.getQuantityToSell();
 
         for (UserAsset asset : assets) {
             if (qtyToSell <= 0) break;

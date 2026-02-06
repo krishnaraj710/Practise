@@ -41,15 +41,20 @@ public class GeminiService {
         }
 
         try {
+            String escapedPrompt = prompt.replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t");
             String requestBody = """
                 {
                   "contents": [{"parts":[{"text": "%s"}]}],
                   "generationConfig": {
                     "temperature": 0.3,
-                    "maxOutputTokens": 256
+                    "maxOutputTokens": 512
                   }
                 }
-                """.formatted(prompt);
+                """.formatted(escapedPrompt);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

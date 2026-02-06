@@ -1,6 +1,7 @@
 package Api_Assets.service;
 
 import Api_Assets.dto.MarketCryptoItem;
+import Api_Assets.dto.StockQuote;
 import Api_Assets.dto.UserAssetRecommendation;
 import Api_Assets.entity.UserAsset;
 import Api_Assets.repository.UserAssetRepository;
@@ -209,32 +210,38 @@ public class RecommendationService {
         return userAssetRepository.findAllStocks();
     }
 
-    /** Top N stocks: from portfolio first, then fill from market (StockData / TOP_MARKET_STOCKS + MARKET_PERFORMANCE). */
+    /** Top N stocks: from portfolio first, then fill from market using live StockData day_change. */
     public List<UserAssetRecommendation> getTopNStocksSuggestions(int n) {
-        List<UserAssetRecommendation> list = getTopNStocks(n);
-        if (list.size() >= n) return list;
+        List<UserAssetRecommendation> list = new ArrayList<>(getTopNStocks(n));
         Set<String> have = list.stream().map(r -> normalizeSymbol(r.getSymbol())).collect(Collectors.toSet());
+
         for (String symbol : TOP_MARKET_STOCKS) {
             if (list.size() >= n) break;
             String sym = symbol.toUpperCase();
             if (have.contains(sym)) continue;
             have.add(sym);
-            BigDecimal perf = MARKET_PERFORMANCE.getOrDefault(symbol, BigDecimal.ZERO);
-            try {
-                stockService.getCurrentPrice(symbol);
-            } catch (Exception ignored) { }
+
+            BigDecimal perf;
+            StockQuote quote = stockService.getStockQuote(symbol);
+            if (quote != null && quote.getDayChangePercent() != null) {
+                perf = quote.getDayChangePercent();
+            } else {
+                perf = MARKET_PERFORMANCE.getOrDefault(symbol, BigDecimal.ZERO);
+            }
             list.add(new UserAssetRecommendation(sym, calculateRisk(perf), perf));
         }
-        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed());
-        return list;
+        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent, Comparator.nullsLast(Comparator.reverseOrder())));
+        return list.stream().limit(n).collect(Collectors.toList());
     }
 
-    /** Top N crypto: from portfolio first, then fill from CoinGecko top by market cap. */
+    private static final List<String> TOP_MARKET_CRYPTO = Arrays.asList("BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "AVAX", "DOGE", "DOT", "LINK");
+
+    /** Top N crypto: from portfolio first, then fill from CoinGecko, then fallback list. */
     public List<UserAssetRecommendation> getTopNCryptoSuggestions(int n) {
-        List<UserAssetRecommendation> list = getTopNCrypto(n);
-        if (list.size() >= n) return list;
+        List<UserAssetRecommendation> list = new ArrayList<>(getTopNCrypto(n));
         Set<String> have = list.stream().map(r -> normalizeSymbol(r.getSymbol())).collect(Collectors.toSet());
-        List<MarketCryptoItem> market = cryptoService.getTopCryptoFromMarket(n + 15);
+
+        List<MarketCryptoItem> market = cryptoService.getTopCryptoFromMarket(Math.max(n + 20, 50));
         for (MarketCryptoItem m : market) {
             if (list.size() >= n) break;
             String sym = m.getSymbol() != null ? m.getSymbol().toUpperCase() : null;
@@ -243,22 +250,37 @@ public class RecommendationService {
             BigDecimal change = m.getPriceChangePercent24h() != null ? m.getPriceChangePercent24h() : BigDecimal.ZERO;
             list.add(new UserAssetRecommendation(sym, calculateRisk(change), change));
         }
-        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed());
-        return list;
+
+        // Fallback: if CoinGecko returns few, fill from static list
+        for (String sym : TOP_MARKET_CRYPTO) {
+            if (list.size() >= n) break;
+            if (have.contains(sym)) continue;
+            have.add(sym);
+            list.add(new UserAssetRecommendation(sym, "LOW", BigDecimal.ZERO));
+        }
+
+        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent, Comparator.nullsLast(Comparator.reverseOrder())));
+        return list.stream().limit(n).collect(Collectors.toList());
     }
 
-    /** Top N assets: from portfolio first, then fill from market stocks then market crypto. */
+    /** Top N assets: from portfolio first, then fill from market (stocks via StockService, crypto via CryptoService). */
     public List<UserAssetRecommendation> getTopNAssetsSuggestions(int n) {
         List<UserAssetRecommendation> list = new ArrayList<>(getTopNAssets(n));
-        if (list.size() >= n) return list;
         Set<String> have = list.stream().map(r -> normalizeSymbol(r.getSymbol())).collect(Collectors.toSet());
         int need = n - list.size();
+
         for (String symbol : TOP_MARKET_STOCKS) {
             if (need <= 0) break;
             String sym = symbol.toUpperCase();
             if (have.contains(sym)) continue;
             have.add(sym);
-            BigDecimal perf = MARKET_PERFORMANCE.getOrDefault(symbol, BigDecimal.ZERO);
+            BigDecimal perf;
+            StockQuote quote = stockService.getStockQuote(symbol);
+            if (quote != null && quote.getDayChangePercent() != null) {
+                perf = quote.getDayChangePercent();
+            } else {
+                perf = MARKET_PERFORMANCE.getOrDefault(symbol, BigDecimal.ZERO);
+            }
             list.add(new UserAssetRecommendation(sym, calculateRisk(perf), perf));
             need--;
         }
@@ -273,7 +295,15 @@ public class RecommendationService {
                 need--;
             }
         }
-        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent).reversed());
-        return list;
+        list.sort(Comparator.comparing(UserAssetRecommendation::getProfitPercent, Comparator.nullsLast(Comparator.reverseOrder())));
+        return list.stream().limit(n).collect(Collectors.toList());
+    }
+
+    /** All holdings (stocks + crypto) with qty > 0 for diversification analysis. */
+    public List<UserAsset> getAllHoldings() {
+        List<UserAsset> all = userAssetRepository.findAll();
+        return all.stream()
+                .filter(a -> a.getQty() != null && a.getQty() > 0)
+                .collect(Collectors.toList());
     }
 }

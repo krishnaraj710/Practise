@@ -28,56 +28,84 @@ public class ChatService {
         }
 
         String msg = message.toLowerCase();
-        int n = extractNumber(msg, 3);
+        int n = extractNumber(msg, 5);
 
-        if (msg.contains("concentrated") || msg.contains("diversif") || msg.contains("diversification")) {
-            List<UserAsset> allStocks = recommendationService.getAllStocks();
-            String diversification = analyzeStockDiversification(allStocks);
-            return diversification;
+        // Concentrated / diversified / diluted (user asking about portfolio spread)
+        if (msg.contains("concentrated") || msg.contains("diversif") || msg.contains("diversification")
+                || msg.contains("diluted") || msg.contains("dilute")) {
+            return analyzeDiversificationWithReason();
         }
 
         if ((msg.contains("top") || msg.contains("suggest")) && msg.contains("stock")) {
-            List<UserAsset> allStocks = recommendationService.getAllStocks();
-            String diversification = analyzeStockDiversification(allStocks);
             List<UserAssetRecommendation> topStocks = recommendationService.getTopNStocksSuggestions(n);
-            if (topStocks.isEmpty()) return "No stock suggestions available.";
-            return buildNumberedResponse(topStocks, n, "stocks", diversification);
+            return buildNumberedResponse(topStocks, n, "stocks", null, "stocks");
         }
 
         if ((msg.contains("top") || msg.contains("suggest")) && msg.contains("crypto")) {
             List<UserAssetRecommendation> topCrypto = recommendationService.getTopNCryptoSuggestions(n);
-            if (topCrypto.isEmpty()) return "No crypto suggestions available.";
-            return buildNumberedResponse(topCrypto, n, "crypto", null);
+            return buildNumberedResponse(topCrypto, n, "crypto", null, "crypto");
         }
 
         if (msg.contains("top") || (msg.contains("suggest") && msg.contains("asset"))) {
             List<UserAssetRecommendation> topAssets = recommendationService.getTopNAssetsSuggestions(n);
-            if (topAssets.isEmpty()) return "No asset suggestions available.";
-            return buildNumberedResponse(topAssets, n, "assets", null);
+            return buildNumberedResponse(topAssets, n, "assets", null, "stocks and crypto");
         }
 
         return getDefaultResponse(message);
     }
 
-    private String analyzeStockDiversification(List<UserAsset> stocks) {
-        if (stocks.isEmpty()) return "**No stocks.** Why: Add stocks to see diversification.";
+    /** Full diversification analysis with reason (stocks + crypto). */
+    private String analyzeDiversificationWithReason() {
+        List<UserAsset> holdings = recommendationService.getAllHoldings();
+        String base = analyzeDiversification(holdings);
 
-        long totalStocks = stocks.stream().map(UserAsset::getSymbol).distinct().count();
+        long uniqueCount = holdings.stream()
+                .map(a -> a.getSymbol() != null ? a.getSymbol().toUpperCase() : "")
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .count();
+        String geminiPrompt = "A portfolio has " + holdings.size() + " positions across "
+                + uniqueCount + " different assets (stocks and/or crypto). "
+                + "In 2-3 sentences, give a brief practical reason about whether this is concentrated or diversified. Be concise.";
+        String geminiInsight = geminiService.generateResponse(geminiPrompt);
 
-        if (totalStocks <= 2) {
-            return "**Concentrated.** Why: You hold only " + totalStocks + " stock(s). Risk is high. Add more to diversify.";
+        if (isValidGeminiResponse(geminiInsight)) {
+            return base + "\n\n**Insight:** " + geminiInsight.trim();
         }
-        if (totalStocks <= 4) {
-            return "**Moderate.** Why: " + totalStocks + " stocks. Add 1–2 more for better diversification.";
-        }
-        if (totalStocks >= 8) {
-            return "**Well diversified.** Why: " + totalStocks + " stocks — good spread, lower single-name risk.";
-        }
-        return "**Good diversification.** Why: " + totalStocks + " stocks — balanced.";
+        return base;
     }
 
-    /** Builds a numbered list of exactly the assets returned (up to requested n). Never truncates to 1. */
-    private String buildNumberedResponse(List<UserAssetRecommendation> assets, int requestedN, String type, String diversification) {
+    /** Analyze diversification across stocks + crypto, with clear reason. */
+    private String analyzeDiversification(List<UserAsset> holdings) {
+        if (holdings == null || holdings.isEmpty()) {
+            return "**No holdings.** Why: Add assets (stocks or crypto) to analyze diversification.";
+        }
+
+        long uniqueSymbols = holdings.stream().map(a -> (a.getSymbol() != null ? a.getSymbol().toUpperCase() : "")).distinct().count();
+        long stockCount = holdings.stream().filter(a -> "STOCK".equalsIgnoreCase(a.getAssetType())).map(UserAsset::getSymbol).distinct().count();
+        long cryptoCount = holdings.stream().filter(a -> "CRYPTO".equalsIgnoreCase(a.getAssetType())).map(UserAsset::getSymbol).distinct().count();
+
+        if (uniqueSymbols <= 2) {
+            return "**Concentrated.** Why: You hold only " + uniqueSymbols + " asset(s) "
+                    + (stockCount > 0 && cryptoCount > 0 ? "(stocks + crypto). " : "")
+                    + "Risk is high if one fails. Add more to diversify.";
+        }
+        if (uniqueSymbols <= 4) {
+            return "**Moderate.** Why: " + uniqueSymbols + " holdings. Add 1–2 more across stocks/crypto for better diversification.";
+        }
+        if (uniqueSymbols >= 8) {
+            return "**Well diversified.** Why: " + uniqueSymbols + " assets — good spread, lower single-name risk.";
+        }
+        return "**Good diversification.** Why: " + uniqueSymbols + " holdings — balanced.";
+    }
+
+    /** Builds a numbered list of assets (from portfolio + market). Uses Gemini for insight when available. */
+    private String buildNumberedResponse(List<UserAssetRecommendation> assets, int requestedN, String type,
+                                         String diversification, String assetTypeForGemini) {
+        if (assets.isEmpty()) {
+            return "No " + type + " recommendations available. Try adding assets or check API keys.";
+        }
+
         StringBuilder sb = new StringBuilder();
         int index = 1;
         for (UserAssetRecommendation a : assets) {
@@ -85,14 +113,21 @@ public class ChatService {
             sb.append(index++).append(". **").append(a.getSymbol()).append("** – ")
                     .append(action).append(" – ").append(formatPercent(a.getProfitPercent())).append("\n");
         }
-        if (assets.size() < requestedN) {
-            sb.append("(Only ").append(assets.size()).append(" ").append(type).append(" in portfolio; you asked for ").append(requestedN).append(".)");
-        } else {
-            sb.setLength(sb.length() - 1); // drop trailing newline
-        }
+        sb.setLength(Math.max(0, sb.length() - 1)); // drop trailing newline
+
         if (diversification != null && !diversification.isEmpty()) {
             sb.append("\n\n").append(diversification);
         }
+
+        // Gemini insight: brief market context for these recommendations
+        String symbols = assets.stream().map(UserAssetRecommendation::getSymbol).limit(5).reduce((a, b) -> a + ", " + b).orElse("");
+        String geminiPrompt = "Given these top " + assetTypeForGemini + " picks: " + symbols
+                + ". In 1-2 sentences, give a brief market context or consideration. Be concise.";
+        String geminiInsight = geminiService.generateResponse(geminiPrompt);
+        if (isValidGeminiResponse(geminiInsight)) {
+            sb.append("\n\n**Insight:** ").append(geminiInsight.trim());
+        }
+
         return sb.toString().trim();
     }
 
@@ -103,6 +138,12 @@ public class ChatService {
             if ("LOW".equalsIgnoreCase(riskLevel)) return profitPercent != null && profitPercent.compareTo(BigDecimal.ZERO) > 0 ? "Buy" : "Hold";
         }
         return profitPercent != null && profitPercent.compareTo(BigDecimal.valueOf(20)) >= 0 ? "Buy" : "Hold";
+    }
+
+    private boolean isValidGeminiResponse(String s) {
+        if (s == null || s.isBlank()) return false;
+        String lower = s.toLowerCase();
+        return !lower.contains("unavailable") && !lower.contains("check api");
     }
 
     private String getDefaultResponse(String message) {

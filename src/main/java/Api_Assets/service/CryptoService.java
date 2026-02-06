@@ -2,38 +2,48 @@ package Api_Assets.service;
 
 import Api_Assets.dto.MarketCryptoItem;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class CryptoService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplateBuilder()
+            .setConnectTimeout(Duration.ofSeconds(10))
+            .setReadTimeout(Duration.ofSeconds(10))
+            .build();
 
     public BigDecimal getCryptoPrice(String symbol) {
+        if (symbol == null || symbol.isBlank()) {
+            return getFallbackPrice("?");
+        }
+
         try {
             String coinId = mapToCoinGeckoId(symbol);
-
             String url = "https://api.coingecko.com/api/v3/simple/price"
                     + "?ids=" + coinId
                     + "&vs_currencies=usd";
 
-            ResponseEntity<JsonNode> response =
-                    restTemplate.getForEntity(url, JsonNode.class);
+            ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
 
-            if (response.getStatusCode().is2xxSuccessful()
-                    && response.getBody() != null
-                    && response.getBody().has(coinId)) {
-
-                return response.getBody()
-                        .get(coinId)
-                        .get("usd")
-                        .decimalValue();
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode body = response.getBody();
+                if (body.has(coinId)) {
+                    JsonNode coinData = body.get(coinId);
+                    if (coinData.has("usd") && !coinData.get("usd").isNull()) {
+                        BigDecimal price = coinData.get("usd").decimalValue();
+                        if (price.compareTo(BigDecimal.ZERO) > 0) {
+                            return price;
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             System.err.println("CoinGecko API error for " + symbol + ": " + e.getMessage());
@@ -49,12 +59,29 @@ public class CryptoService {
             case "solana", "sol" -> "solana";
             case "cardano", "ada" -> "cardano";
             case "ripple", "xrp" -> "ripple";
+            case "dogecoin", "doge" -> "dogecoin";
+            case "tether", "usdt" -> "tether";
+            case "usd-coin", "usdc" -> "usd-coin";
+            case "polygon", "matic" -> "matic-network";
+            case "polkadot", "dot" -> "polkadot";
+            case "chainlink", "link" -> "chainlink";
+            case "avalanche", "avax" -> "avalanche-2";
+            case "uniswap", "uni" -> "uniswap";
+            case "litecoin", "ltc" -> "litecoin";
             default -> symbol.toLowerCase();
         };
     }
 
     private BigDecimal getFallbackPrice(String symbol) {
-        return BigDecimal.valueOf(100);
+        return switch (symbol.toUpperCase()) {
+            case "BTC" -> BigDecimal.valueOf(67000);
+            case "ETH" -> BigDecimal.valueOf(3500);
+            case "SOL" -> BigDecimal.valueOf(180);
+            case "ADA" -> BigDecimal.valueOf(0.55);
+            case "XRP" -> BigDecimal.valueOf(0.62);
+            case "DOGE" -> BigDecimal.valueOf(0.15);
+            default -> BigDecimal.valueOf(100);
+        };
     }
 
     /** Top coins by market cap from CoinGecko (for suggestions when portfolio has fewer than N). */
@@ -62,7 +89,7 @@ public class CryptoService {
         List<MarketCryptoItem> out = new ArrayList<>();
         try {
             String url = "https://api.coingecko.com/api/v3/coins/markets"
-                    + "?vs_currency=usd&order=market_cap_desc&per_page=" + Math.min(limit, 20) + "&page=1";
+                    + "?vs_currency=usd&order=market_cap_desc&per_page=" + Math.min(limit, 100) + "&page=1";
             ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return out;
             JsonNode arr = response.getBody();

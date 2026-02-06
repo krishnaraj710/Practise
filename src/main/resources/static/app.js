@@ -66,15 +66,25 @@ function getAvgBuyPriceForSymbol(symbol, holdings) {
 let currentSellAsset = null;
 
 function openSellModal(asset) {
-  currentSellAsset = asset;
-  document.getElementById('sell-symbol').textContent = asset.symbol;
-  document.getElementById('sell-available').textContent = asset.quantity;
-  document.getElementById('sell-max').textContent = asset.quantity;
-
+  if (!asset || !asset.symbol) return;
+  currentSellAsset = {
+    symbol: asset.symbol,
+    name: asset.name || '-',
+    category: asset.category || '-',
+    buyPrice: asset.buyPrice ?? 0,
+    quantity: Number(asset.quantity) || 0,
+    currentPrice: Number(asset.currentPrice) || asset.buyPrice || 0
+  };
+  const modal = document.getElementById('sellModal');
+  if (!modal) return;
+  document.getElementById('sell-symbol').textContent = currentSellAsset.symbol;
+  document.getElementById('sell-available').textContent = currentSellAsset.quantity;
+  document.getElementById('sell-max').textContent = currentSellAsset.quantity;
   document.getElementById('sell-qty').value = '';
+  document.getElementById('sell-qty').max = currentSellAsset.quantity;
   document.getElementById('sell-error').classList.add('d-none');
-
-  new bootstrap.Modal(document.getElementById('sellModal')).show();
+  document.getElementById('sell-proceeds').textContent = '$0.00';
+  new bootstrap.Modal(modal).show();
 }
 
 async function initDashboard() {
@@ -213,18 +223,6 @@ async function initManageAssets() {
       <td>${asset.category}</td>
       <td class="text-end">${formatCurrency(asset.buyPrice)}</td>
       <td class="text-end">${asset.quantity}</td>
-      <td class="text-end">${formatCurrency(asset.currentPrice)}</td>
-      <td class="text-end">${formatCurrency((asset.currentPrice - asset.buyPrice) * asset.quantity)}</td>
-      <td class="text-end ${((asset.currentPrice - asset.buyPrice) >= 0 ? 'text-success' : 'text-danger')}">
-        ${((asset.currentPrice - asset.buyPrice) / asset.buyPrice * 100).toFixed(1)}%
-      </td>
-      <td>
-        <div class="btn-group btn-group-sm" role="group">
-          <button class="btn btn-outline-danger" onclick="openSellModal(${JSON.stringify(asset)})" title="Sell">
-            <i class="bi bi-box-arrow-down"></i>
-          </button>
-        </div>
-      </td>
     `;
       tableBody.appendChild(tr);
     });
@@ -283,6 +281,7 @@ async function initManageAssets() {
         category: h.category,
         buyPrice: h.buyPrice,
         quantity: h.quantity,
+        currentPrice: h.currentPrice ?? h.buyPrice,
       }));
       renderTable();
       statusEl.textContent = assets.length
@@ -368,10 +367,7 @@ async function initHoldings() {
               2
           )}%</td>
           <td class="text-end">
-            <button class="btn btn-link btn-sm text-decoration-none text-danger btn-sell-position" 
-                    onclick="openSellModal(${JSON.stringify(h)})" title="Sell">
-              <i class="bi bi-box-arrow-down"></i>
-            </button>
+            <button class="btn btn-danger btn-sm btn-sell-position" data-asset="${encodeURIComponent(JSON.stringify({symbol:h.symbol,name:h.name,category:h.category,buyPrice:h.buyPrice,quantity:h.quantity,currentPrice:h.currentPrice}))}">Sell</button>
           </td>
         `;
           tableBody.appendChild(tr);
@@ -451,6 +447,18 @@ async function initHoldings() {
     renderHoldings(e.target.value);
   });
 
+  // Sell button click delegation (avoids JSON-in-onclick issues)
+  tableBody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-sell-position");
+    if (!btn || !btn.dataset.asset) return;
+    try {
+      const asset = JSON.parse(decodeURIComponent(btn.dataset.asset));
+      openSellModal(asset);
+    } catch (err) {
+      console.error("Sell button parse error:", err);
+    }
+  });
+
   refreshBtn.addEventListener("click", () => {
     // Clear cache to force fresh data
     API.clearPriceCache();
@@ -458,8 +466,10 @@ async function initHoldings() {
     loadHistory();
   });
 
-  // Sell modal handlers (runs once per page load)
-  document.getElementById('confirm-sell').addEventListener('click', async () => {
+  // Sell modal handlers (holdings page)
+  const confirmSellEl = document.getElementById('confirm-sell');
+  if (confirmSellEl) {
+    confirmSellEl.addEventListener('click', async () => {
     const qty = parseInt(document.getElementById('sell-qty').value);
     const maxQty = parseInt(document.getElementById('sell-max').textContent);
 
@@ -477,8 +487,10 @@ async function initHoldings() {
       });
 
       if (response.ok) {
-        bootstrap.Modal.getInstance(document.getElementById('sellModal')).hide();
-        loadHoldings(); // Refresh table
+        bootstrap.Modal.getInstance(document.getElementById('sellModal'))?.hide();
+        API.clearPriceCache();
+        loadHoldings();
+        loadHistory();
       } else {
         throw new Error(await response.text());
       }
@@ -487,15 +499,20 @@ async function initHoldings() {
       document.getElementById('sell-error').classList.remove('d-none');
     }
   });
+  }
 
-  // Live proceeds preview
-  document.getElementById('sell-qty').addEventListener('input', function() {
+  // Live proceeds preview (holdings)
+  const sellQtyEl = document.getElementById('sell-qty');
+  if (sellQtyEl) {
+    sellQtyEl.addEventListener('input', function() {
     const qty = parseInt(this.value) || 0;
-    const proceeds = (qty * currentSellAsset.currentPrice).toLocaleString('en-US', {
+    const proceeds = (qty * (currentSellAsset?.currentPrice || 0)).toLocaleString('en-US', {
       style: 'currency', currency: 'USD', minimumFractionDigits: 2
     });
-    document.getElementById('sell-proceeds').textContent = proceeds;
+    const proceedsEl = document.getElementById('sell-proceeds');
+    if (proceedsEl) proceedsEl.textContent = proceeds;
   });
+  }
 
   loadHoldings();
   loadHistory();
@@ -621,7 +638,9 @@ function initChatbot() {
   /** Renders **text** as bold; escapes HTML for safety. */
   function formatChatMessage(text) {
     const escaped = escapeHtml(text);
-    return escaped.replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>").replace(/\\n/g, "<br>");
+    return escaped
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
   }
 
   function appendMessage(text, role) {
